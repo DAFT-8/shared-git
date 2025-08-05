@@ -1,0 +1,26 @@
+#!/bin/bash -e
+
+for cmd in git sshd; do command -v "$cmd" &> /dev/null || { echo >&2 "$cmd is not installed. Install it."; exit 1; }; done
+
+[ "$1" ] && [ -d "$1" ] || { echo >&2 "Usage: $0 <folder>"; exit 1; }
+
+cd $1
+
+HOST=$(whoami)
+DIR=$(pwd)
+DIRNAME=$(basename $1)
+BRANCH=master
+LOCAL_IP=$(ip addr show | grep 'inet ' | awk '{print $2}' | cut -d'/' -f1 | tail -n1)
+
+git config --get user.name &> /dev/null || git config --global user.name "John Doe" &> /dev/null
+git config --get user.email &> /dev/null || git config --global user.email "john.doe@example.com" &> /dev/null
+git config --get init.defaultBranch &> /dev/null || git config --global init.defaultBranch "$BRANCH" true &> /dev/null
+git config --get push.autoSetupRemote &> /dev/null || git config --global push.autoSetupRemote true &> /dev/null
+
+[ ! -d ".git" ] && git init -b "$BRANCH" &> /dev/null && git init --bare ".$DIRNAME-$BRANCH.git" &> /dev/null && echo -e ".$DIRNAME-$BRANCH.git" > .gitignore && git remote add origin ".$DIRNAME-$BRANCH.git" &> /dev/null
+
+[ ! -f "$HOME/.ssh/id_rsa" ] && ssh-keygen -t rsa -N "" -f "$HOME/.ssh/id_rsa" &> /dev/null
+
+pidof sshd &> /dev/null || su -c "/sbin/sshd -h $HOME/.ssh/id_rsa"
+
+echo -e "Clone using:\n\tgit clone ssh://$HOST@$LOCAL_IP$DIR/.$DIRNAME-$BRANCH.git $DIRNAME-$BRANCH"
