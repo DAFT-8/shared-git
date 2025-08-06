@@ -21,6 +21,6 @@ git config --get push.autoSetupRemote &> /dev/null || git config --global push.a
 
 [ ! -f "$HOME/.ssh/id_rsa" ] && ssh-keygen -t rsa -N "" -f "$HOME/.ssh/id_rsa" &> /dev/null
 
-pidof sshd &> /dev/null || su -c "/sbin/sshd -h $HOME/.ssh/id_rsa"
+pidof sshd &> /dev/null || su -c "/sbin/sshd -h $HOME/.ssh/id_rsa &> /dev/null"
 
 echo -e "Clone using:\n\tgit clone ssh://$HOST@$LOCAL_IP$DIR/.$DIRNAME-$BRANCH.git $DIRNAME-$BRANCH"
